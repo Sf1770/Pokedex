@@ -30,8 +30,16 @@ class PokemonDetailVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        nameLbl.text = pokemon.name
-
+        nameLbl.text = pokemon.name.capitalized
+        
+        pokemon.downloadPokemonDetails {
+            
+            print("Did arrive here")
+            
+            //Whatever we write will only be called after the netwrok call is complete.
+            self.updateUI()
+            
+        }
 
         // Do any additional setup after loading the view.
     }
@@ -41,6 +49,14 @@ class PokemonDetailVC: UIViewController {
         
     }
 
+    
+    func updateUI(){
+        baseAttackLbl.text = pokemon.attack
+        defenseLbl.text = pokemon.defense
+        heightLbl.text = pokemon.height
+        weightLbl.text = pokemon.weight
+        pokedexLbl.text = "\(pokemon.pokedexID)"
+    }
 
     /*
     // MARK: - Navigation
