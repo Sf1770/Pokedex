@@ -22,6 +22,9 @@ class Pokemon{
     private var _attack: String!
     private var _nextEvoTitle: String!
     private var _pokemonURL: String!
+    private var _nextEvoName: String!
+    private var _nextEvoId: String!
+    private var _nextEvoLevel: String!
     
     
     var attack: String {
@@ -75,14 +78,33 @@ class Pokemon{
         return _description
     }
     
-    
-    
     var name: String {
         return _name
     }
     
     var pokedexID: Int {
         return _pokedexID
+    }
+    
+    var nextEvoName: String{
+        if _nextEvoName == nil{
+            _nextEvoName = ""
+        }
+        return _nextEvoName
+    }
+    
+    var nextEvoId: String{
+        if _nextEvoId == nil {
+            _nextEvoId = ""
+        }
+        return _nextEvoId
+    }
+    
+    var nextEvoLevel: String{
+        if _nextEvoLevel == nil{
+            _nextEvoLevel = ""
+        }
+        return _nextEvoLevel
     }
     
     init(name: String, pokedexId: Int){
@@ -113,10 +135,82 @@ class Pokemon{
                 if let attack = dict["attack"] as? Int{
                     self._attack = "\(attack)"
                 }
+                
+                if let types = dict["types"] as? [Dictionary<String,String>], types.count > 0{
+                    if let name = types[0]["name"] {
+                        self._type = name.capitalized
+                    }
+                    
+                    if types.count > 1 {
+                        for x in 1..<types.count{
+                            if let name = types[x]["name"]{
+                                self._type! += "/\(name.capitalized)"
+                            }
+                        }
+                    }
+                } else{
+                  self._type = ""
+                }
+                
+                if let descArr = dict["descriptions"] as? [Dictionary<String, String>], descArr.count > 0{
+                    
+                   
+                    if let url = descArr[0]["resource_uri"] {
+                        
+                        let descURL = "\(URL_BASE)\(url)"
+                        Alamofire.request(descURL).responseJSON(completionHandler: { response in
+                            
+                            if let descDict = response.result.value as? Dictionary<String, AnyObject> {
+                                
+                                if let description = descDict["description"] as? String {
+                                    
+                                   let newDescription = description.replacingOccurrences(of: "POKMON", with: "Pokemon")
+                                    self._description = newDescription
+                                }
+                            }
+                        
+                            completed()
+                        })
+                        
+                    } else {
+                        self._description = ""
+                    }
+                    
+                    if let evolutions = dict["evolutions"] as? [Dictionary<String,AnyObject>], evolutions.count > 0{
+                        
+                        if let nextEvo = evolutions[0]["to"] as? String {
+                            if nextEvo.range(of: "mega") == nil {
+                                
+                                self._nextEvoName = nextEvo
+                                
+                                if let uri = evolutions[0]["resource_uri"] as? String{
+                                    let newStr = uri.replacingOccurrences(of: "/api/v1/pokemon/", with: "")
+                                    let nextEvoId = newStr.replacingOccurrences(of: "/", with: "")
+                                    
+                                    self._nextEvoId = nextEvoId
+                                    
+                                    if let lvlExist = evolutions[0]["level"]{
+                                        if let lvl = lvlExist as? Int{
+                                            self._nextEvoLevel = "\(lvl)"
+            
+                                        }
+                                    } else{
+                                        self._nextEvoLevel =  ""
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 print(self._weight)
                 print(self._height)
                 print(self._attack)
                 print(self._defense)
+                print(self._type)
+                print(self._nextEvoName)
+                print(self._nextEvoLevel)
+                print(self._nextEvoId)
             }
             completed()
         }
